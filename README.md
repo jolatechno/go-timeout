@@ -38,6 +38,10 @@ func main() {
 ### _Output :_
 
 ```
+returned <nil>
+<nil> Timed-out
+<nil> Error
+<nil> Timed-out
 
 ```
 
