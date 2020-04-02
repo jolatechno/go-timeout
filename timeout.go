@@ -3,8 +3,6 @@ package timeout
 import (
   "time"
   "errors"
-
-  "fmt"
 )
 
 func MakeTimeout(f func() (interface{}, error), timeout time.Duration) (interface{}, error) {
