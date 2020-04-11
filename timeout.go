@@ -5,6 +5,10 @@ import (
   "errors"
 )
 
+var (
+  TimeOut = errors.New("Timed-out")
+)
+
 func MakeTimeout(f func() (interface{}, error), timeout time.Duration) (interface{}, error) {
   dataChan := make(chan interface{})
   errChan := make(chan error)
@@ -29,6 +33,23 @@ func MakeTimeout(f func() (interface{}, error), timeout time.Duration) (interfac
     return nil, err
 
   case <- time.After(timeout):
-    return nil, errors.New("Timed-out")
+    return nil, TimeOut
+  }
+}
+
+func MakeSimpleTimeout(f func() error, timeout time.Duration) error {
+  errChan := make(chan error)
+
+  go func(){
+    errChan <- f()
+    close(errChan)
+  }()
+
+  select {
+  case err := <- errChan:
+    return err
+
+  case <- time.After(timeout):
+    return TimeOut
   }
 }
