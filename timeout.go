@@ -53,3 +53,42 @@ func MakeSimpleTimeout(f func() error, timeout time.Duration) error {
     return TimeOut
   }
 }
+
+func MakeCheckerTimeout(f func() (interface{}, error), timeout time.Duration, checker func() error, ticking time.Duration) (interface{}, error) {
+  dataChan := make(chan interface{})
+  errChan := make(chan error)
+
+  go func(){
+    data, err := f()
+    if err != nil {
+      errChan <- err
+    } else {
+      dataChan <- data
+    }
+  }()
+
+  ticker := time.NewTicker(ticking)
+
+  for {
+    select {
+    case data := <- dataChan:
+      ticker.Stop()
+      return data, nil
+
+    case err := <- errChan:
+      ticker.Stop()
+      return nil, err
+
+    case <- time.After(timeout):
+      ticker.Stop()
+      return nil, TimeOut
+
+    case <- ticker.C:
+      err := checker()
+      if err != nil {
+        ticker.Stop()
+        return nil, err
+      }
+    }
+  }
+}
