@@ -9,6 +9,14 @@ var (
   TimeOut = errors.New("Timed-out")
 )
 
+func afterWithNegative(t time.Duration) <-chan time.Time {
+  if t > 0 {
+    return time.After(t)
+  }
+
+  return make(chan time.Time)
+}
+
 func MakeTimeout(f func() (interface{}, error), timeout time.Duration) (interface{}, error) {
   dataChan := make(chan interface{})
   errChan := make(chan error)
@@ -32,7 +40,7 @@ func MakeTimeout(f func() (interface{}, error), timeout time.Duration) (interfac
   case err := <- errChan:
     return nil, err
 
-  case <- time.After(timeout):
+  case <- afterWithNegative(timeout):
     return nil, TimeOut
   }
 }
@@ -49,7 +57,7 @@ func MakeSimpleTimeout(f func() error, timeout time.Duration) error {
   case err := <- errChan:
     return err
 
-  case <- time.After(timeout):
+  case <- afterWithNegative(timeout):
     return TimeOut
   }
 }
@@ -79,7 +87,7 @@ func MakeCheckerTimeout(f func() (interface{}, error), timeout time.Duration, ch
       ticker.Stop()
       return nil, err
 
-    case <- time.After(timeout):
+    case <- afterWithNegative(timeout):
       ticker.Stop()
       return nil, TimeOut
 
